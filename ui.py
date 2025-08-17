@@ -14,6 +14,7 @@ class HanoiUI(ttk.Frame):
         self._solver: Optional[Generator[Move, None, None]] = None
         self._auto_after: Optional[str] = None
         self.peg_color = "#64748b"
+        self.disk_color = "#0ea5e9"
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -27,7 +28,7 @@ class HanoiUI(ttk.Frame):
         # Controls
         bar = ttk.Frame(self, padding=(0,8,0,0))
         bar.grid(row=1, column=0, sticky="ew")
-        bar.columnconfigure(8, weight=1)
+        bar.columnconfigure(9, weight=1)
 
         ttk.Label(bar, text="Disks:").grid(row=0, column=0)
         self.n_var = tk.IntVar(value=self.state.n_disks)
@@ -41,9 +42,10 @@ class HanoiUI(ttk.Frame):
         self.auto_btn = ttk.Checkbutton(bar, text="Auto", variable=self.auto_var, command=self._auto_toggle)
         self.auto_btn.grid(row=0, column=5, padx=6)
         ttk.Button(bar, text="Peg Color", command=self._choose_peg_color).grid(row=0, column=6, padx=3)
+        ttk.Button(bar, text="Disk Color", command=self._choose_disk_color).grid(row=0, column=7, padx=3)
 
         self.status = ttk.Label(bar, text="Moves: 0")
-        self.status.grid(row=0, column=7, sticky="e")
+        self.status.grid(row=0, column=8, sticky="e")
 
         self.redraw()
 
@@ -89,6 +91,12 @@ class HanoiUI(ttk.Frame):
         color = colorchooser.askcolor(color=self.peg_color, title="Select peg color")[1]
         if color:
             self.peg_color = color
+            self.redraw()
+
+    def _choose_disk_color(self):
+        color = colorchooser.askcolor(color=self.disk_color, title="Select disk color")[1]
+        if color:
+            self.disk_color = color
             self.redraw()
 
     def _schedule(self):
@@ -152,7 +160,7 @@ class HanoiUI(ttk.Frame):
                 width_factor = (disk / max_disk)
                 half = int((peg_w * 0.4) * (0.3 + 0.7 * width_factor))
                 x = peg_xs[peg_i]
-                c.create_rectangle(x-half, y1, x+half, y2, outline="", fill="#0ea5e9")
+                c.create_rectangle(x-half, y1, x+half, y2, outline="", fill=self.disk_color)
 
         # selection highlight
         if self.state.selected_peg is not None:
