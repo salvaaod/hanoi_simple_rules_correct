@@ -1,6 +1,6 @@
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, colorchooser
 from typing import Optional, Generator, Tuple
 from model import GameState
 from solver import hanoi_moves
@@ -13,6 +13,7 @@ class HanoiUI(ttk.Frame):
         self.state = GameState(4)
         self._solver: Optional[Generator[Move, None, None]] = None
         self._auto_after: Optional[str] = None
+        self.peg_color = "#64748b"
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -39,6 +40,7 @@ class HanoiUI(ttk.Frame):
         self.auto_var = tk.BooleanVar(value=False)
         self.auto_btn = ttk.Checkbutton(bar, text="Auto", variable=self.auto_var, command=self._auto_toggle)
         self.auto_btn.grid(row=0, column=5, padx=6)
+        ttk.Button(bar, text="Peg Color", command=self._choose_peg_color).grid(row=0, column=6, padx=3)
 
         self.status = ttk.Label(bar, text="Moves: 0")
         self.status.grid(row=0, column=7, sticky="e")
@@ -82,6 +84,12 @@ class HanoiUI(ttk.Frame):
             self._schedule()
         else:
             self._stop_auto()
+
+    def _choose_peg_color(self):
+        color = colorchooser.askcolor(color=self.peg_color, title="Select peg color")[1]
+        if color:
+            self.peg_color = color
+            self.redraw()
 
     def _schedule(self):
         self._step()
@@ -131,7 +139,7 @@ class HanoiUI(ttk.Frame):
         c.create_rectangle(margin, base_y, w-margin, base_y+8, fill="#334155", outline="")
         # pegs
         for x in peg_xs:
-            c.create_rectangle(x-4, peg_top, x+4, base_y, fill="#64748b", outline="")
+            c.create_rectangle(x-4, peg_top, x+4, base_y, fill=self.peg_color, outline="")
 
         # disks
         # IMPORTANT: we iterate bottom->top (the list is stored bottom..top)
