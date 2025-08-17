@@ -23,7 +23,16 @@ class HanoiUI(ttk.Frame):
         self.canvas = tk.Canvas(self, highlightthickness=0, bg="#f8fafc")
         self.canvas.grid(row=0, column=0, sticky="nsew")
         self.canvas.bind("<Configure>", lambda e: self.redraw())
-        self.canvas.bind("<Button-1>", self._click)
+        # mouse interactions
+        self.canvas.bind("<ButtonPress-1>", self._press)
+        self.canvas.bind("<B1-Motion>", self._drag)
+        self.canvas.bind("<ButtonRelease-1>", self._release)
+        # drag state
+        self._drag_start: Optional[int] = None
+        self._drag_disk: Optional[int] = None
+        self._drag_item: Optional[int] = None
+        self._drag_half: int = 0
+        self._drag_disk_h: int = 0
 
         # Controls
         bar = ttk.Frame(self, padding=(0,8,0,0))
@@ -111,6 +120,73 @@ class HanoiUI(ttk.Frame):
         self.auto_var.set(False)
 
     # ---- Canvas interactions ----
+    def _press(self, event):
+        # record the starting peg; actual drag starts on motion
+        w = self.canvas.winfo_width()
+        peg_w = w / 3
+        self._drag_start = min(2, int(event.x // peg_w))
+
+    def _drag(self, event):
+        if self._drag_start is None:
+            return
+        if self._drag_disk is None:
+            # initialize dragging on first motion
+            if not self.state.pegs[self._drag_start]:
+                self._drag_start = None
+                return
+            self.state.selected_peg = None
+            self._drag_disk = self.state.pegs[self._drag_start].pop()
+            c = self.canvas
+            w = c.winfo_width() or 640
+            h = c.winfo_height() or 360
+            base_y = h - 40
+            peg_w = w / 3
+            peg_top = 80
+            max_disk = self.state.n_disks
+            disk_h = max(14, int((base_y - peg_top - 20) / max_disk))
+            self._drag_disk_h = disk_h
+            width_factor = (self._drag_disk / max_disk)
+            half = int((peg_w * 0.4) * (0.3 + 0.7 * width_factor))
+            self._drag_half = half
+            self.redraw()
+            self._drag_item = c.create_rectangle(
+                event.x - half,
+                event.y - disk_h / 2,
+                event.x + half,
+                event.y + disk_h / 2,
+                outline="",
+                fill=self.disk_color,
+            )
+        else:
+            c = self.canvas
+            half = self._drag_half
+            disk_h = self._drag_disk_h
+            c.coords(
+                self._drag_item,
+                event.x - half,
+                event.y - disk_h / 2,
+                event.x + half,
+                event.y + disk_h / 2,
+            )
+
+    def _release(self, event):
+        if self._drag_disk is not None and self._drag_start is not None:
+            c = self.canvas
+            w = c.winfo_width()
+            peg_w = w / 3
+            dest = min(2, int(event.x // peg_w))
+            # restore disk to perform move via model
+            self.state.pegs[self._drag_start].append(self._drag_disk)
+            moved = self.state.move(self._drag_start, dest)
+            c.delete(self._drag_item)
+            self._drag_disk = None
+            self._drag_item = None
+            self._drag_start = None
+            self.redraw()
+            self._update_status()
+        else:
+            self._drag_start = None
+            self._click(event)
     def _click(self, event):
         w = self.canvas.winfo_width()
         peg_w = w / 3
