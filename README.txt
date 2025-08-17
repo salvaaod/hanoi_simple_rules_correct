@@ -17,3 +17,5 @@ Files:
 Run:
   python app.py
   # or open app.py in Thonny and press Run
+
+Use the "Peg Color" and "Disk Color" buttons to customize the appearance.
