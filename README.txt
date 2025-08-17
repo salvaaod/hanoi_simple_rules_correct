@@ -19,3 +19,4 @@ Run:
   # or open app.py in Thonny and press Run
 
 Use the "Peg Color" and "Disk Color" buttons to customize the appearance.
+Disks can be moved by either clicking pegs or dragging the top disk with the mouse.
